@@ -3,7 +3,7 @@ import cors from "cors";
 
 const app = express();
 
-const allowedOrigins = 'https://pro-management-one.vercel.app/'
+const allowedOrigins = 'https://pro-management-one.vercel.app/';
 
 
 app.use(cors({
