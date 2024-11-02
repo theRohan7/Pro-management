@@ -3,7 +3,7 @@ import cors from "cors";
 
 const app = express();
 
-const allowedOrigins = 'http://localhost:5173'
+const allowedOrigins = 'https://pro-management-clientside.vercel.app/'
 
 
 app.use(cors({
