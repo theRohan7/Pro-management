@@ -1,0 +1,90 @@
+.main {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+.side-nav {
+    position: relative;
+    width: 15%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-right: 1px solid #EDF5FE
+}
+
+.settings {
+    width: 85%;
+    display: flex;
+    flex-direction: column;
+    padding: 35px;
+    border-right: 1px solid #EDF5FE
+}
+
+.settings h1 {
+    font-family: Inter;
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 29.96px;
+    text-align: left;
+    color: #000000;
+    margin-bottom: 70px;
+}
+
+
+.settings form {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 25px;
+}
+
+.settings form input {
+    width: 100%;
+    border: 1.38px solid #D0D0D0;
+    padding: 15px 40px;
+    border-radius: 10px;
+}
+
+.settings .input-div {
+    position: relative;
+    height: 40px;
+}
+
+.settings .input-div img {
+    position: absolute;
+    top: 50%;   
+    left: 4%;
+    transform: translate(-50%, -40%);
+}
+
+.settings .input-div .eye-btn {
+    position: absolute;
+    top: 50%;   
+    right: 5%;
+    transform: translate(-50%, -40%);
+}
+
+.settings .update-btn {
+    width: 40%;
+    margin-top: 50px;
+    font-family: inter;
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 26.28px;
+    text-align: center;
+    padding: 12px 10px;
+    border-radius: 55px;
+    border: none;
+    color: white;
+    background-color: #17A2B8;
+    cursor: pointer;
+
+}
+.settings .update-btn:hover {
+    background-color: #0b6d7c;
+    cursor: pointer;
+}
