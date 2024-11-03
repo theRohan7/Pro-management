@@ -34,27 +34,24 @@ function SharedTask() {
   };
 
   const getDueDateBackground = (task) => {
-    
-    if (task.status === 'Done') {
-      return '#63C05B';
+    if (task.status === "Done") {
+      return "#63C05B";
     }
-     
+
     if (
-      task.priority === 'High Priority' || 
-      (task.dueDate && moment(task.dueDate).isBefore(moment(), 'day'))
+      task.priority === "High Priority" ||
+      (task.dueDate && moment(task.dueDate).isBefore(moment(), "day"))
     ) {
-      return '#CF3636'; 
+      return "#CF3636";
     }
-    
-    return '#DBDBDB'; 
+
+    return "#DBDBDB";
   };
 
   if (loading) {
     return <div>loading...</div>;
   }
 
-  // console.log(task);
-  
   return (
     <div className="main-body">
       <div className="main-logo">
@@ -64,17 +61,17 @@ function SharedTask() {
       <div className="box">
         <div className="task-container">
           <div className="priority-header ">
-          <div
-            className="circle"
-            style={{
-              backgroundColor:
-                task.priority === "High Priority"
-                  ? "#FF2473"
-                  : task.priority === "Moderate Priority"
-                  ? "#18B0FF"
-                  : "#63C05B",
-            }}
-          ></div>
+            <div
+              className="circle"
+              style={{
+                backgroundColor:
+                  task.priority === "High Priority"
+                    ? "#FF2473"
+                    : task.priority === "Moderate Priority"
+                    ? "#18B0FF"
+                    : "#63C05B",
+              }}
+            ></div>
             {task.priority}
           </div>
           <div className="task-title">{task.title}</div>
@@ -93,15 +90,18 @@ function SharedTask() {
             </div>
           </div>
           <div className="task-footer">
-        {task.dueDate && 
-        <span 
-        className="dueDate"
-        style={{
-          backgroundColor: getDueDateBackground(task)}}
-        >
-          Due Date {formateDate(task.dueDate)}
-        </span>
-        }
+            {task.dueDate && (
+              <span className="dueDate">
+                Due Date
+                <span
+                  style={{
+                    backgroundColor: getDueDateBackground(task),
+                  }}
+                >
+                  {formateDate(task.dueDate)}
+                </span>
+              </span>
+            )}
           </div>
         </div>
       </div>
