@@ -65,7 +65,11 @@ function TaskForm({ onClose, isEditing = false, initialData = null }) {
     );
   };
 
-  const handleChecklistChnage = (index, value) => {
+  const handleChecklistChnage = (index, value) => {   
+    if (value === "") {
+      setError("Please enter a title");
+      return;
+    }
     setChecklists(
       checklists.map((item, i) =>
         i === index ? { ...item, title: value } : item
