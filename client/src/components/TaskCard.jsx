@@ -6,12 +6,19 @@ import toast from "react-hot-toast";
 import TaskForm from "../pages/TaskForm";
 import moment from "moment";
 
-function TaskCard({ task }) {
+function TaskCard({ task, isCollapsed }) {
   const { taskStatus, updateTaskChecklist, updateDeleteTask, updateEditedTask } = useContext(TaskContext);
   const [collapseChecklist, setCollapseChecklist] = useState(true);
   const [showOptions, setShowOptions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    if (isCollapsed) {
+      setCollapseChecklist(true);
+    }
+  }, [isCollapsed]);
+ 
 
   const getInitials = (email) => {
   

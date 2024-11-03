@@ -24,6 +24,13 @@ function Dashboard() {
   const { fetchTasks, tasks } = useContext(TaskContext);
   const [filter, setFilter] = useState("This Month");
   const [addTask, setAddTask] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState({
+    Backlog: false,
+    Todo: false,
+    'In Progress': false,
+    Done: false
+  });
+
 
   useEffect(() => {
     if(userDetails){
@@ -53,6 +60,13 @@ function Dashboard() {
   const handleLogOut = () => {
     localStorage.removeItem("user-token");
     navigate('/login');
+  }
+
+  const handleCollapseCategory = (category) => {
+    setCollapsedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
   }
   
 
@@ -115,14 +129,23 @@ function Dashboard() {
                   <h3>{category}</h3>
                   <div className="collapse-add">
                     {category === "Todo" && <i className="ri-add-large-line" onClick={handleAddTask}></i>}
-                    <img src={collapseAllLogo} />
+                    <img 
+                    src={collapseAllLogo}
+                    alt="collapse"
+                      onClick={() => handleCollapseCategory(category)}
+                      style={{ 
+                        cursor: 'pointer',
+                        transform: collapsedCategories[category] ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.3s ease'
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="category-body">
                   {tasks.map(
                     (task) =>
                       task.status === category && (
-                        <TaskCard task={task} key={task._id} />
+                        <TaskCard task={task} key={task._id} isCollapsed={collapsedCategories[category]} />
                       )
                   )}
                 </div>
