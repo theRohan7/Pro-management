@@ -149,7 +149,7 @@ function Register() {
             </p>
           )}
 
-          <button className="register-btn" type="submit">Register</button>
+          <button className="register-btn" type="submit">{loading ? "Loading..." : "Register"}</button>
           <div className="bottom-div">
             <p>Have an account ?</p>
             <button onClick={() => navigate("/login")} type="button" >Login</button>
