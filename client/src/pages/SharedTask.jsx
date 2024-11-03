@@ -102,6 +102,8 @@ function SharedTask() {
                     borderRadius: "5px",
                     marginLeft: "10px",
                     fontFamily: "Inter",
+                    color: "white",
+                    fontSize: "12px",
                   }}
                 >
                   {formateDate(task.dueDate)}
