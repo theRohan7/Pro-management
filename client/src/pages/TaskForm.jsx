@@ -16,7 +16,7 @@ function TaskForm({ onClose, isEditing = false, initialData = null }) {
   const [priority, setPriority] = useState(initialData?.priority || "");
   const [asignee, setAsignee] = useState(initialData?.asignee || null);
   const [asigneeId, setAsigneeId] = useState(initialData?.asigneeId || null);
-  const [dueDate, setDueDate] = useState(initialData?.dueDate || null);
+  const [dueDate, setDueDate] = useState(initialData?.dueDate ? new Date(initialData.dueDate) : null);
   const [error, setError] = useState("");
   const [showAsigneeDropdown, setShowAsigneeDropdown] = useState(false);
   const [checklists, setChecklists] = useState(
@@ -256,7 +256,14 @@ function TaskForm({ onClose, isEditing = false, initialData = null }) {
             type="button"
             onClick={() => setShowDatePicker(!showDatePicker)}
             className="date-btn">
-              {dueDate ? dueDate.toLocaleDateString() : "Select Due Date"}
+              {dueDate instanceof Date 
+    ? dueDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      })
+    : "Select Due Date"
+  }
             </button>
             {showDatePicker && (
               <DatePicker

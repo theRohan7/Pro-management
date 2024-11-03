@@ -130,40 +130,50 @@ const changeTaskStatus = asyncHandler(async (req, res) => {
 
     let analyticsUpdate = {};
 
-    switch (oldStatus) {
-        case 'Backlog':
-            analyticsUpdate['analytics.backlogTasks'] = -1;
-            break;
-        case 'Todo':
-            analyticsUpdate['analytics.todoTasks'] = -1;
-            break;
-        case 'In Progress':
-            analyticsUpdate['analytics.inProgressTasks'] = -1;
-            break;
-        case 'Done':
-            analyticsUpdate['analytics.doneTasks'] = -1;
-            break;
+    if (oldStatus !== status) {
+      switch (oldStatus) {
+        case "Backlog":
+          if (user.analytics.backlogTasks > 0) {
+            analyticsUpdate["analytics.backlogTasks"] = -1;
+          }
+          break;
+        case "Todo":
+          if (user.analytics.todoTasks > 0) {
+            analyticsUpdate["analytics.todoTasks"] = -1;
+          }
+          break;
+        case "In Progress":
+          if (user.analytics.inProgressTasks > 0) {
+            analyticsUpdate["analytics.inProgressTasks"] = -1;
+          }
+          break;
+        case "Done":
+          if (user.analytics.doneTasks > 0) {
+            analyticsUpdate["analytics.doneTasks"] = -1;
+          }
+          break;
+      }
+  
+      switch (status) {
+        case "Backlog":
+          analyticsUpdate["analytics.backlogTasks"] = (analyticsUpdate["analytics.backlogTasks"] || 0) + 1;
+          break;
+        case "Todo":
+          analyticsUpdate["analytics.todoTasks"] = (analyticsUpdate["analytics.todoTasks"] || 0) + 1;
+          break;
+        case "In Progress":
+          analyticsUpdate["analytics.inProgressTasks"] = (analyticsUpdate["analytics.inProgressTasks"] || 0) + 1;
+          break;
+        case "Done":
+          analyticsUpdate["analytics.doneTasks"] = (analyticsUpdate["analytics.doneTasks"] || 0) + 1;
+          break;
+      }
     }
-
-    switch (status) {
-        case 'Backlog':
-            analyticsUpdate['analytics.backlogTasks'] = analyticsUpdate['analytics.backlogTasks'] ? 0 : 1;
-            break;
-        case 'Todo':
-            analyticsUpdate['analytics.todoTasks'] = analyticsUpdate['analytics.todoTasks'] ? 0 : 1;
-            break;
-        case 'In Progress':
-            analyticsUpdate['analytics.inProgressTasks'] = analyticsUpdate['analytics.inProgressTasks'] ? 0 : 1;
-            break;
-        case 'Done':
-            analyticsUpdate['analytics.doneTasks'] = analyticsUpdate['analytics.doneTasks'] ? 0 : 1;
-            break;
-    }
-
   
     await User.findByIdAndUpdate(id, {
-        $inc: analyticsUpdate
+      $inc: analyticsUpdate,
     });
+  
 
     return res
     .status(200)
@@ -212,34 +222,45 @@ const  editTask = asyncHandler(async (req, res) => {
 
     let analyticsUpdate = {};
 
-    switch (oldPriority) {
-        case 'Low Priority':
-            analyticsUpdate['analytics.lowPriorityTasks'] = -1;
-            break;
-        case 'Moderate Priority':   
-            analyticsUpdate['analytics.moderatePriorityTasks'] = -1;
-            break;
-        case 'High Priority':
-            analyticsUpdate['analytics.highPriorityTasks'] = -1;
-            break;
-    }
 
-    switch (priority) {
-        case 'Low Priority':
-            analyticsUpdate['analytics.lowPriorityTasks'] = analyticsUpdate['analytics.lowPriorityTasks'] ? 0 : 1;
-            break;
-        case 'Moderate Priority':
-            analyticsUpdate['analytics.moderatePriorityTasks'] = analyticsUpdate['analytics.moderatePriorityTasks'] ? 0 : 1;
-            break;
-        case 'High Priority':
-            analyticsUpdate['analytics.highPriorityTasks'] = analyticsUpdate['analytics.highPriorityTasks'] ? 0 : 1;
-            break;
-    }
+if (oldPriority !== priority) {
+  switch (oldPriority) {
+    case "Low Priority":
+      if (user.analytics.lowPriorityTasks > 0) {
+        analyticsUpdate["analytics.lowPriorityTasks"] = -1;
+      }
+      break;
+    case "Moderate Priority":
+      if (user.analytics.moderatePriorityTasks > 0) {
+        analyticsUpdate["analytics.moderatePriorityTasks"] = -1;
+      }
+      break;
+    case "High Priority":
+      if (user.analytics.highPriorityTasks > 0) {
+        analyticsUpdate["analytics.highPriorityTasks"] = -1;
+      }
+      break;
+  }
+}
 
-  
-    await User.findByIdAndUpdate(id, {
-        $inc: analyticsUpdate
-    });
+
+if (oldPriority !== priority) {
+  switch (priority) {
+    case "Low Priority":
+      analyticsUpdate["analytics.lowPriorityTasks"] = (analyticsUpdate["analytics.lowPriorityTasks"] || 0) + 1;
+      break;
+    case "Moderate Priority":
+      analyticsUpdate["analytics.moderatePriorityTasks"] = (analyticsUpdate["analytics.moderatePriorityTasks"] || 0) + 1;
+      break;
+    case "High Priority":
+      analyticsUpdate["analytics.highPriorityTasks"] = (analyticsUpdate["analytics.highPriorityTasks"] || 0) + 1;
+      break;
+  }
+}
+
+await User.findByIdAndUpdate(id, {
+  $inc: analyticsUpdate,
+});
 
     return res
     .status(200)
@@ -265,39 +286,54 @@ const  editTask = asyncHandler(async (req, res) => {
     }
 
     let analyticsUpdate = {};
-    switch (task.priority) {
-      case 'Low Priority':
-        analyticsUpdate['analytics.lowPriorityTasks'] = -1;
-        break;
-      case 'Moderate Priority':
-        analyticsUpdate['analytics.moderatePriorityTasks'] = -1;
-        break;
-      case 'High Priority':
-        analyticsUpdate['analytics.highPriorityTasks'] = -1;
-        break;
-    }
 
-    switch (task.status) {
-        case 'Backlog':
-            analyticsUpdate['analytics.backlogTasks'] = -1;
-            break;
-        case 'Todo':
-            analyticsUpdate['analytics.todoTasks'] = -1;
-            break;
-        case 'In Progress':
-            analyticsUpdate['analytics.inProgressTasks'] = -1;
-            break;
-        case 'Done':
-            analyticsUpdate['analytics.doneTasks'] = -1;
-            break;
+
+    switch (task.priority) {
+      case "Low Priority":
+        if (user.analytics.lowPriorityTasks > 0) {
+          analyticsUpdate["analytics.lowPriorityTasks"] = -1;
+        }
+        break;
+      case "Moderate Priority":
+        if (user.analytics.moderatePriorityTasks > 0) {
+          analyticsUpdate["analytics.moderatePriorityTasks"] = -1;
+        }
+        break;
+      case "High Priority":
+        if (user.analytics.highPriorityTasks > 0) {
+          analyticsUpdate["analytics.highPriorityTasks"] = -1;
+        }
+        break;
     }
   
+    switch (task.status) {
+      case "Backlog":
+        if (user.analytics.backlogTasks > 0) {
+          analyticsUpdate["analytics.backlogTasks"] = -1;
+        }
+        break;
+      case "Todo":
+        if (user.analytics.todoTasks > 0) {
+          analyticsUpdate["analytics.todoTasks"] = -1;
+        }
+        break;
+      case "In Progress":
+        if (user.analytics.inProgressTasks > 0) {
+          analyticsUpdate["analytics.inProgressTasks"] = -1;
+        }
+        break;
+      case "Done":
+        if (user.analytics.doneTasks > 0) {
+          analyticsUpdate["analytics.doneTasks"] = -1;
+        }
+        break;
+    }
 
     await Task.findByIdAndDelete(taskId);
-
-  await User.findByIdAndUpdate(id, {
-    $inc: analyticsUpdate,
-  });
+  
+    await User.findByIdAndUpdate(id, {
+      $inc: analyticsUpdate,
+    });
 
     return res
     .status(200)
