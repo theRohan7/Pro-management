@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { getSharedTask } from "../services/task";
 import { promanageLogo } from "../utils/export";
 import "../CSS/SharedTask.css";
+import moment from "moment";
 
 function SharedTask() {
   const { taskId } = useParams();
@@ -25,6 +26,11 @@ function SharedTask() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formateDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
   const getDueDateBackground = (task) => {
