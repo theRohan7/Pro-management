@@ -214,8 +214,8 @@
 
 .checklist-group {
     overflow-y: auto;
-    min-height: 250px;
-    max-height: 250px;
+    min-height: 200px;
+    max-height: 200px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
