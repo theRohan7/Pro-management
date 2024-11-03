@@ -72,6 +72,7 @@ function TaskCard({ task, isCollapsed }) {
   const handleShareTask = (taskId) => {
    navigator.clipboard.writeText(`${window.location.origin}/shared-task/${taskId}`);
     setShowOptions(false);
+    toast.success("Copied to clipboard");
   }
 
   const handleDeleteTask = async(taskId) => {   

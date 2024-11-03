@@ -49,7 +49,6 @@ function Dashboard() {
   
 
   const handleAddTask = () => {
-    console.log("add task");
     setAddTask(true);
   }
 

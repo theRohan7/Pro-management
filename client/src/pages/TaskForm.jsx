@@ -115,7 +115,6 @@ function TaskForm({ onClose, isEditing = false, initialData = null }) {
       setError(error.message);
     } finally {
       setLoading(false);
-      onClose();
     }
   };
 
