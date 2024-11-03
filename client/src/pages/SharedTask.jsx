@@ -91,11 +91,17 @@ function SharedTask() {
           </div>
           <div className="task-footer">
             {task.dueDate && (
-              <span className="dueDate">
+              <span className="dueDate"
+              style={{color: "gray", fontSize: "12px", fontFamily: "Inter"}}
+              >
                 Due Date
                 <span
                   style={{
                     backgroundColor: getDueDateBackground(task),
+                    padding: "5px 10px",
+                    borderRadius: "5px",
+                    marginLeft: "10px",
+                    fontFamily: "Inter",
                   }}
                 >
                   {formateDate(task.dueDate)}
