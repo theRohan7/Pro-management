@@ -1,33 +1,37 @@
 import React, { useContext, useEffect, useState } from "react";
 import "../CSS/Taskcard.css";
-import { changeTaskStatus, deleteTask, updateTaskChecklists } from "../services/task";
+import {
+  changeTaskStatus,
+  deleteTask,
+  updateTaskChecklists,
+} from "../services/task";
 import { TaskContext } from "../contexts/TaskContext";
 import toast from "react-hot-toast";
 import TaskForm from "../pages/TaskForm";
 import moment from "moment";
+import DeleteConfirmationDialouge from "./DeleteConfirmationDialouge";
 
 function TaskCard({ task, isCollapsed }) {
-  const { taskStatus, updateTaskChecklist, updateDeleteTask, updateEditedTask } = useContext(TaskContext);
+  const {
+    taskStatus,
+    updateTaskChecklist,
+    updateDeleteTask,
+    updateEditedTask,
+  } = useContext(TaskContext);
   const [collapseChecklist, setCollapseChecklist] = useState(true);
   const [showOptions, setShowOptions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     if (isCollapsed) {
       setCollapseChecklist(true);
     }
   }, [isCollapsed]);
- 
 
   const getInitials = (email) => {
-  
-    return email
-      .split("@")[0]
-      .slice(0, 2)
-      .toUpperCase();
+    return email.split("@")[0].slice(0, 2).toUpperCase();
   };
-  
 
   const formateDate = (dateString) => {
     const date = new Date(dateString);
@@ -56,7 +60,7 @@ function TaskCard({ task, isCollapsed }) {
       const response = await changeTaskStatus(newStatus, taskId);
       if (response.status === 200) {
         console.log(response.data);
-        
+
         await taskStatus(response.data.data);
       }
     } catch (error) {
@@ -67,49 +71,58 @@ function TaskCard({ task, isCollapsed }) {
   const handleEditTask = () => {
     setIsEditing(true);
     setShowOptions(false);
-  }
+  };
 
   const handleShareTask = (taskId) => {
-   navigator.clipboard.writeText(`${window.location.origin}/shared-task/${taskId}`);
+    navigator.clipboard.writeText(
+      `${window.location.origin}/shared-task/${taskId}`
+    );
     setShowOptions(false);
     toast.success("Copied to clipboard");
-  }
+  };
 
-  const handleDeleteTask = async(taskId) => {   
+  const handleDeleteTask = () => {
+    setShowDeleteConfirmation(true);
+    setShowOptions(false);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
-      const response = await deleteTask(taskId);
+      const response = await deleteTask(task._id);
       console.log(response.data);
-      
+
       if (response.status === 200) {
-        await updateDeleteTask(taskId);
-        setShowOptions(false);
+        await updateDeleteTask(task._id);
         toast.success("Task deleted successfully");
+        setShowDeleteConfirmation(false);
       }
     } catch (error) {
       console.error(error.message);
     }
-  }
-
-  const getDueDateBackground = (task) => {
-    
-    if (task.status === 'Done') {
-      return '#63C05B';
-    }
-     
-    if (
-      task.priority === 'High Priority' || 
-      (task.dueDate && moment(task.dueDate).isBefore(moment(), 'day'))
-    ) {
-      return '#CF3636'; 
-    }
-    
-    return '#DBDBDB'; 
   };
 
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmation(false);
+  };
+
+  const getDueDateBackground = (task) => {
+    if (task.status === "Done") {
+      return "#63C05B";
+    }
+
+    if (
+      task.priority === "High Priority" ||
+      (task.dueDate && moment(task.dueDate).isBefore(moment(), "day"))
+    ) {
+      return "#CF3636";
+    }
+
+    return "#DBDBDB";
+  };
 
   if (isEditing) {
     return (
-      <TaskForm 
+      <TaskForm
         onClose={() => setIsEditing(false)}
         isEditing={true}
         initialData={{
@@ -120,14 +133,11 @@ function TaskCard({ task, isCollapsed }) {
           asigneeId: task.asignee?._id,
           checklists: task.checklists,
           dueDate: task.dueDate,
-          status: task.status
+          status: task.status,
         }}
       />
     );
   }
-
-  
-  
 
   return (
     <div className="taskcard">
@@ -144,7 +154,12 @@ function TaskCard({ task, isCollapsed }) {
                   : "#63C05B",
             }}
           ></div>
-          <span className="task-priority">{task.priority}</span>{task.asignee && <span className="asignee-avatar" >{task.asignee?.email && getInitials(task.asignee.email)}</span> }
+          <span className="task-priority">{task.priority}</span>
+          {task.asignee && (
+            <span className="asignee-avatar">
+              {task.asignee?.email && getInitials(task.asignee.email)}
+            </span>
+          )}
         </div>
         <span
           className="more-options"
@@ -154,11 +169,11 @@ function TaskCard({ task, isCollapsed }) {
         </span>
         <div
           className="task-options"
-          style={{ display: showOptions  ? "block" : "none" }}
+          style={{ display: showOptions ? "block" : "none" }}
         >
-          <button onClick={() => handleEditTask(task._id)} >Edit</button> <br />
-          <button onClick={() => handleShareTask(task._id)} >Share</button>
-          <button onClick={() => handleDeleteTask(task._id)} >Delete</button>
+          <button onClick={() => handleEditTask(task._id)}>Edit</button> <br />
+          <button onClick={() => handleShareTask(task._id)}>Share</button>
+          <button onClick={() => handleDeleteTask()}>Delete</button>
         </div>
       </div>
       <h3 className="task-title">
@@ -195,15 +210,16 @@ function TaskCard({ task, isCollapsed }) {
       </div>
 
       <div className="task-footer">
-        {task.dueDate && 
-        <span 
-        className="dueDate"
-        style={{
-          backgroundColor: getDueDateBackground(task)}}
-        >
-          {formateDate(task.dueDate)}
-        </span>
-        }
+        {task.dueDate && (
+          <span
+            className="dueDate"
+            style={{
+              backgroundColor: getDueDateBackground(task),
+            }}
+          >
+            {formateDate(task.dueDate)}
+          </span>
+        )}
         <div className="statusButtons">
           {availableStatus().map((status, index) => (
             <button
@@ -215,6 +231,11 @@ function TaskCard({ task, isCollapsed }) {
           ))}
         </div>
       </div>
+      <DeleteConfirmationDialouge
+        isOpen={showDeleteConfirmation}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </div>
   );
 }

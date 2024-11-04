@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import '../CSS/Analytics.css'
 import { userData } from "../services/user.js";
+import LogoutConfirmation from "../components/LogoutConfirmation.jsx";
 
 function Analytics() {
     const navigate = useNavigate();
     const [analyticsData, setAnalyticsData] = useState({});
     const [loading, setLoading] = useState(true);
+    const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
     
 
     useEffect(() => {
@@ -16,10 +18,19 @@ function Analytics() {
       getAnalyticsData(token);
     },[])
 
-    const handleLogOut = () => {
+    const handleLogoutClick = () => {
+      setShowLogoutConfirmation(true);
+    };
+  
+    const handleConfirmLogout = () => {
       localStorage.removeItem("user-token");
       navigate('/login');
-    }
+      setShowLogoutConfirmation(false);
+    };
+  
+    const handleCancelLogout = () => {
+      setShowLogoutConfirmation(false);
+    };
 
     const getAnalyticsData = async (token) => {
       try {
@@ -66,7 +77,7 @@ function Analytics() {
           </div>
 
           <div className="bottom-nav-option">
-            <button type="button" className="logout-btn" onClick={handleLogOut}>
+            <button type="button" className="logout-btn" onClick={handleLogoutClick}>
               <img src={logoutLogo} alt="" />
               <h4>Log Out</h4>
             </button>
@@ -95,6 +106,11 @@ function Analytics() {
           </div>
         </div>
       </div>
+      <LogoutConfirmation 
+        isOpen={showLogoutConfirmation}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+      />
     </div>
   );
 }

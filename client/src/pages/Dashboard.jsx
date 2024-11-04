@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import TaskCard from "../components/TaskCard.jsx";
 import TaskForm from "./TaskForm.jsx";
 import moment from "moment";
+import LogoutConfirmation from "../components/LogoutConfirmation.jsx";
 
 
 
@@ -30,6 +31,7 @@ function Dashboard() {
     'In Progress': false,
     Done: false
   });
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
 
   useEffect(() => {
@@ -56,10 +58,19 @@ function Dashboard() {
     setAddTask(false);
   }
 
-  const handleLogOut = () => {
+  const handleLogoutClick = () => {
+    setShowLogoutConfirmation(true);
+  };
+
+  const handleConfirmLogout = () => {
     localStorage.removeItem("user-token");
     navigate('/login');
-  }
+    setShowLogoutConfirmation(false);
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutConfirmation(false);
+  };
 
   const handleCollapseCategory = (category) => {
     setCollapsedCategories(prev => ({
@@ -97,7 +108,7 @@ function Dashboard() {
           </div>
 
           <div className="bottom-nav-option">
-            <button type="button" className="logout-btn" onClick={handleLogOut}>
+            <button type="button" className="logout-btn" onClick={handleLogoutClick}>
               <img src={logoutLogo} alt="" />
               <h4>Log Out</h4>
             </button>
@@ -154,6 +165,11 @@ function Dashboard() {
         </div>
       </div>
       {addTask && <TaskForm onClose={handleCloseAddTask} />}
+      <LogoutConfirmation 
+        isOpen={showLogoutConfirmation}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+      />
        
     </div>
   );

@@ -16,6 +16,7 @@ import "../CSS/Settings.css";
 import { AuthContext } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
 import { changePassword, updateEmail, updateName } from "../services/user";
+import LogoutConfirmation from "../components/LogoutConfirmation";
 
 function Settings() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ function Settings() {
   const [loading, setLoading] = useState(false);
   const [showOldPass, setShowOldPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
+  const [showLogoutConfirmation,setShowLogoutConfirmation] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,10 +112,19 @@ function Settings() {
     setNewPassword(e.target.value);
   };
 
-  const handleLogOut = () => {
+  const handleLogoutClick = () => {
+    setShowLogoutConfirmation(true);
+  };
+
+  const handleConfirmLogout = () => {
     localStorage.removeItem("user-token");
     navigate('/login');
-  }
+    setShowLogoutConfirmation(false);
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutConfirmation(false);
+  };
 
   return (
     <div className="main">
@@ -141,7 +152,7 @@ function Settings() {
           </div>
 
           <div className="bottom-nav-option">
-            <button type="button" className="logout-btn" onClick={handleLogOut} >
+            <button type="button" className="logout-btn" onClick={handleLogoutClick} >
               <img src={logoutLogo} alt="" />
               <h4>Log Out</h4>
             </button>
@@ -232,6 +243,11 @@ function Settings() {
           </button>
         </form>
       </div>
+      <LogoutConfirmation 
+        isOpen={showLogoutConfirmation}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+      />
     </div>
   );
 }
