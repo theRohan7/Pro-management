@@ -15,7 +15,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Email is required")
     }
     if(!password || password.length < 6){
-        throw new ApiError(400, "Password is required")
+        throw new ApiError(400, "Password should be greater than 6 characters")
     }
 
     const  existedUser = await User.findOne({ email })
