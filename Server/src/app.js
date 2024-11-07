@@ -7,7 +7,8 @@ const app = express();
 
 const allowedOrigins = [
     "http://localhost:5173",  
-    "https://pro-management-one.vercel.app" 
+    "https://pro-management-one.vercel.app" ,
+    'https://pro-management-1.onrender.com'
 ];
   
  
@@ -20,6 +21,7 @@ app.use(cors({
       }
       return callback(null, true);
     },
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
