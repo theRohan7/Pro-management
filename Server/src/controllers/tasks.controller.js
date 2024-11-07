@@ -7,295 +7,197 @@ import moment from "moment";
 
 
 const createTask = asyncHandler(async (req, res) => {
-    const {title, priority, status, dueDate, asigneeId, checklists} = req.body
-    console.log(asigneeId);
-    
-    const id = req.user._id
+  const { title, priority, status, dueDate, asigneeId, checklists } = req.body;
+  const userId = req.user._id;
 
-    if(!title || title === ''){
-        throw new ApiError(400, "Title is required")
-    }
+  if (!title || title === '') {
+    throw new ApiError(400, 'Title is required');
+  }
 
-    if(!priority || priority === ''){
-        throw new ApiError(400, "Priority is required")
-    }
-    if(!status || status === ''){
-        throw new ApiError(400, "Status is required")
-    }
-    if(checklists.length < 1){
-        throw new ApiError(400, "Atleast 1 checklist is required")
-    }
+  if (!priority || priority === '') {
+    throw new ApiError(400, 'Priority is required');
+  }
+  if (!status || status === '') {
+    throw new ApiError(400, 'Status is required');
+  }
+  if (checklists.length < 1) {
+    throw new ApiError(400, 'Atleast 1 checklist is required');
+  }
 
-    const user = await User.findById(id)
+  const user = await User.findById(userId);
 
-    if(!user){
-        throw new ApiError(404, "User not found")
-    }
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
 
-    const task = await Task.create({
-        title: title,
-        owner: id,
-        priority: priority,
-        status: status,
-        dueDate: dueDate,
-        asignee: asigneeId || null,
-        checklists: checklists,
-    })
+  const task = await Task.create({
+    title,
+    owner: userId,
+    priority,
+    status,
+    dueDate,
+    asignee: asigneeId || null,
+    checklists,
+  });
 
-    const createdTask = await Task.findById(task._id).populate('asignee')
+  const createdTask = await Task.findById(task._id).populate('asignee');
 
-    if(asigneeId !== null) {
-        await User.findByIdAndUpdate(
-            asigneeId,
-            { $addToSet: { tasks: task._id } },
-            { new: true, validateBeforeSave: false }
-        );
-    }
-
+  if (asigneeId !== null) {
     await User.findByIdAndUpdate(
-        id,
-        { $addToSet: { tasks: task._id } },
-        { new: true, validateBeforeSave: false }
+      asigneeId,
+      { $addToSet: { tasks: task._id } },
+      { new: true, validateBeforeSave: false }
     );
+    await updateUserAnalytics(asigneeId, null, priority, null, status, dueDate, 1)
+  }
 
-    
-    
-    let analyticsUpdate = {};
+  await User.findByIdAndUpdate(
+    userId,
+    { $addToSet: { tasks: task._id } },
+    { new: true, validateBeforeSave: false }
+  );
 
-    switch (priority) {
-        case 'Low Priority':
-            analyticsUpdate['analytics.lowPriorityTasks'] = 1;
-            break;
-        case 'Moderate Priority':
-            analyticsUpdate['analytics.moderatePriorityTasks'] = 1;
-            break;
-        case 'High Priority':
-            analyticsUpdate['analytics.highPriorityTasks'] = 1;
-            break;
-    }
+  await updateUserAnalytics(userId, null, priority, null, status, dueDate, 1);
 
-    switch (status) {
-        case 'Backlog':
-            analyticsUpdate['analytics.backlogTasks'] = 1;
-            break;
-        case 'Todo':
-            analyticsUpdate['analytics.todoTasks'] = 1;
-            break;
-        case 'In Progress':
-            analyticsUpdate['analytics.inProgressTasks'] = 1;
-            break;
-        case 'Done':
-            analyticsUpdate['analytics.doneTasks'] = 1;
-            break;
-    }
-
-    if (dueDate) {
-        analyticsUpdate['analytics.dueDateTasks'] = 1;
-    }
-
-  
-    await User.findByIdAndUpdate(id, {
-        $inc: analyticsUpdate
-    });
-
-    return res
+  return res
     .status(201)
-    .json(
-        new ApiResponse (201, createdTask, "Task created successfully")
-    )
-})
-
-const changeTaskStatus = asyncHandler(async (req, res) => {
-    const { status, taskId } = req.body
-    const id = req.user._id
-
-    const user = await User.findById(id)
-    if(!user){
-        throw new ApiError(404, "User not found")
-    }   
-
-    const task = await Task.findById(taskId).populate('asignee')
-    if(!task){
-        throw new ApiError(404, "Task not found")
-    }
-
-    if(!['Backlog', 'Todo', 'In Progress', 'Done'].includes(status)){
-        throw new ApiError(400, "Invalid status")
-    }
-
-    const oldStatus = task.status
-
-    task.status = status
-    await task.save({validateBeforeSave: false})
-
-    let analyticsUpdate = {};
-
-    if (oldStatus !== status) {
-      switch (oldStatus) {
-        case "Backlog":
-          if (user.analytics.backlogTasks > 0) {
-            analyticsUpdate["analytics.backlogTasks"] = -1;
-          }
-          break;
-        case "Todo":
-          if (user.analytics.todoTasks > 0) {
-            analyticsUpdate["analytics.todoTasks"] = -1;
-          }
-          break;
-        case "In Progress":
-          if (user.analytics.inProgressTasks > 0) {
-            analyticsUpdate["analytics.inProgressTasks"] = -1;
-          }
-          break;
-        case "Done":
-          if (user.analytics.doneTasks > 0) {
-            analyticsUpdate["analytics.doneTasks"] = -1;
-          }
-          break;
-      }
-  
-      switch (status) {
-        case "Backlog":
-          analyticsUpdate["analytics.backlogTasks"] = (analyticsUpdate["analytics.backlogTasks"] || 0) + 1;
-          break;
-        case "Todo":
-          analyticsUpdate["analytics.todoTasks"] = (analyticsUpdate["analytics.todoTasks"] || 0) + 1;
-          break;
-        case "In Progress":
-          analyticsUpdate["analytics.inProgressTasks"] = (analyticsUpdate["analytics.inProgressTasks"] || 0) + 1;
-          break;
-        case "Done":
-          analyticsUpdate["analytics.doneTasks"] = (analyticsUpdate["analytics.doneTasks"] || 0) + 1;
-          break;
-      }
-    }
-  
-    await User.findByIdAndUpdate(id, {
-      $inc: analyticsUpdate,
-    });
-  
-
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, task, "Task status updated successfully")
-    )
-})
-
-const  editTask = asyncHandler(async (req, res) => {
-
-    const { title, priority, dueDate, asigneeId, checklists } = req.body
-    const  {taskId} = req.params
-    const id = req.user._id
-
-
-    const user = await User.findById(id)
-    if(!user){
-        throw new ApiError(404, "User not found")
-    } 
-
-    const task = await Task.findById(taskId).populate('asignee');
-    if(!task){
-        throw new ApiError(404, "Task not found")
-    }
-
-    const asignedUser = await User.findById(asigneeId).select('-password')
-    if(!asignedUser){
-        throw new ApiError(404, "Asigned user not found") 
-    }
-
-    const oldPriority = task.priority
-
-    task.title = title
-    task.priority = priority
-    task.dueDate = dueDate
-    task.asignee = asignedUser
-    task.checklists = checklists
-    await task.save({validateBeforeSave: false})
-
-   
-
-    if(!asignedUser.tasks.includes(task._id)){
-        asignedUser.tasks.push(task._id);
-        await asignedUser.save({validateBeforeSave: false})
-    }
-
-    let analyticsUpdate = {};
-
-
-if (oldPriority !== priority) {
-  switch (oldPriority) {
-    case "Low Priority":
-      if (user.analytics.lowPriorityTasks > 0) {
-        analyticsUpdate["analytics.lowPriorityTasks"] = -1;
-      }
-      break;
-    case "Moderate Priority":
-      if (user.analytics.moderatePriorityTasks > 0) {
-        analyticsUpdate["analytics.moderatePriorityTasks"] = -1;
-      }
-      break;
-    case "High Priority":
-      if (user.analytics.highPriorityTasks > 0) {
-        analyticsUpdate["analytics.highPriorityTasks"] = -1;
-      }
-      break;
-  }
-}
-
-
-if (oldPriority !== priority) {
-  switch (priority) {
-    case "Low Priority":
-      analyticsUpdate["analytics.lowPriorityTasks"] = (analyticsUpdate["analytics.lowPriorityTasks"] || 0) + 1;
-      break;
-    case "Moderate Priority":
-      analyticsUpdate["analytics.moderatePriorityTasks"] = (analyticsUpdate["analytics.moderatePriorityTasks"] || 0) + 1;
-      break;
-    case "High Priority":
-      analyticsUpdate["analytics.highPriorityTasks"] = (analyticsUpdate["analytics.highPriorityTasks"] || 0) + 1;
-      break;
-  }
-}
-
-await User.findByIdAndUpdate(id, {
-  $inc: analyticsUpdate,
+    .json(new ApiResponse(201, createdTask, 'Task created successfully'));
 });
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, task, "Task updated successfully")
-    )
+const changeTaskStatus = asyncHandler(async (req, res) => {
+  const { status, taskId } = req.body;
+  const userId = req.user._id;
 
- })
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const task = await Task.findById(taskId).populate('asignee');
+  if (!task) {
+    throw new ApiError(404, 'Task not found');
+  }
+
+  if (!['Backlog', 'Todo', 'In Progress', 'Done'].includes(status)) {
+    throw new ApiError(400, 'Invalid status');
+  }
+
+  const oldStatus = task.status;
+  task.status = status;
+  await task.save({ validateBeforeSave: false });
+
+  await updateUserAnalytics(userId, null, priority, oldStatus, status, null, 1);
+
+  if (task.asignee) {
+    await updateUserAnalytics(task.asignee._id, null, priority, oldStatus, status, null, 1);
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, task, 'Task status updated successfully'));
+});
+
+const editTask = asyncHandler(async (req, res) => {
+  const { title, priority, dueDate, asigneeId, checklists } = req.body;
+  const { taskId } = req.params;
+  const userId = req.user._id;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const task = await Task.findById(taskId).populate('asignee');
+  if (!task) {
+    throw new ApiError(404, 'Task not found');
+  }
+
+  if(task.owner.toString() !== userId.toString()) {
+    throw new ApiError(403, 'You are not authorized to edit this task');
+  }
+
+  const newAsignee = await User.findById(asigneeId).select('-password');
+  if (!newAsignee) {
+    throw new ApiError(404, 'Assigned user not found');
+  }
+
+  const oldAsignee = task.asignee;
+  const oldPriority = task.priority;
+
+  task.title = title;
+  task.priority = priority;
+  task.dueDate = dueDate;
+  task.asignee = newAsignee;
+  task.checklists = checklists;
+  await task.save({ validateBeforeSave: false });
+
+  if (!newAsignee.tasks.includes(task._id)) {
+    newAsignee.tasks.push(task._id);
+    await newAsignee.save({ validateBeforeSave: false });
+  }
+
+  if (oldAsignee && oldAsignee._id.toString() !== newAsignee._id.toString()) {
+    await User.findByIdAndUpdate(
+      oldAsignee._id,
+      { $pull: { tasks: task._id } },
+      { new: true, validateBeforeSave: false }
+    );
+    await updateUserAnalytics(oldAsignee._id, oldPriority, null, oldStatus, null, task.dueDate, -1);
+  }
+
+  await updateUserAnalytics(userId, oldPriority, priority, oldStatus, null, dueDate, 1);
+  await updateUserAnalytics(newAsignee._id, priority, null, null, null, dueDate, 1)
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, task, 'Task updated successfully'));
+});
 
  const deleteTask = asyncHandler(async (req, res) => {
   const { taskId } = req.params;
   const userId = req.user._id;
 
-  const task = await Task.findById(taskId);
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const task = await Task.findById(taskId).populate('asignee');
   if (!task) {
-    throw new ApiError(404, "Task not found");
+    throw new ApiError(404, 'Task not found');
   }
 
   if (task.owner.toString() !== userId.toString()) {
     throw new ApiError(403, "You are not authorized to delete this task");
   }
 
-  const assignedToId = task.asignee?.toString();
-
-
-  await updateUserAnalytics(userId, task, -1);
-
-  await updateUserAnalytics(assignedToId, task, -1);
-
+  const asignee = task.asignee;
 
   await Task.findByIdAndDelete(taskId);
 
+  await User.findByIdAndUpdate(
+    userId,
+    { $pull: { tasks: taskId } },
+    { new: true, validateBeforeSave: false }
+  );
+
+  if (asignee) {
+    await User.findByIdAndUpdate(
+      asignee._id,
+      { $pull: { tasks: taskId } },
+      { new: true, validateBeforeSave: false }
+    );
+  }
+
+  await updateUserAnalytics(userId, task.priority, null, task.dueDate, -1);
+
+  if (asignee) {
+    await updateUserAnalytics(asignee._id, task.priority, null, task.dueDate, -1);
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Task deleted successfully"));
+    .json(new ApiResponse(200, null, 'Task deleted successfully'));
 });
 
 
@@ -398,23 +300,86 @@ await User.findByIdAndUpdate(id, {
  })
 
 
- async function updateUserAnalytics(userId, task, increment) {
-  const user = await User.findById(userId);
-  if (!user) {
-    return;
+ const updateUserAnalytics = async (
+                                  userId, 
+                                  oldPriority, 
+                                  newPriority, 
+                                  oldStatus, 
+                                  newStatus, 
+                                  dueDate, 
+                                  increment = 1
+                                  ) => {
+  const analyticsUpdate = {};
+
+  // Update priority-related analytics
+  if (oldPriority !== newPriority) {
+    switch (oldPriority) {
+      case 'Low Priority':
+        analyticsUpdate['analytics.lowPriorityTasks'] = increment * -1;
+        break;
+      case 'Moderate Priority':
+        analyticsUpdate['analytics.moderatePriorityTasks'] = increment * -1;
+        break;
+      case 'High Priority':
+        analyticsUpdate['analytics.highPriorityTasks'] = increment * -1;
+        break;
+    }
+
+    switch (newPriority) {
+      case 'Low Priority':
+        analyticsUpdate['analytics.lowPriorityTasks'] = (analyticsUpdate['analytics.lowPriorityTasks'] || 0) + increment;
+        break;
+      case 'Moderate Priority':
+        analyticsUpdate['analytics.moderatePriorityTasks'] = (analyticsUpdate['analytics.moderatePriorityTasks'] || 0) + increment;
+        break;
+      case 'High Priority':
+        analyticsUpdate['analytics.highPriorityTasks'] = (analyticsUpdate['analytics.highPriorityTasks'] || 0) + increment;
+        break;
+    }
   }
 
-  const analyticsUpdate = {
-    [`analytics.${task.priority.toLowerCase()}PriorityTasks`]: increment,
-    [`analytics.${task.status.toLowerCase()}Tasks`]: increment,
-  };
+  // Update status-related analytics
+  if (oldStatus !== newStatus) {
+    switch (oldStatus) {
+      case 'Backlog':
+        analyticsUpdate['analytics.backlogTasks'] = increment * -1;
+        break;
+      case 'Todo':
+        analyticsUpdate['analytics.todoTasks'] = increment * -1;
+        break;
+      case 'In Progress':
+        analyticsUpdate['analytics.inProgressTasks'] = increment * -1;
+        break;
+      case 'Done':
+        analyticsUpdate['analytics.doneTasks'] = increment * -1;
+        break;
+    }
+
+    switch (newStatus) {
+      case 'Backlog':
+        analyticsUpdate['analytics.backlogTasks'] = (analyticsUpdate['analytics.backlogTasks'] || 0) + increment;
+        break;
+      case 'Todo':
+        analyticsUpdate['analytics.todoTasks'] = (analyticsUpdate['analytics.todoTasks'] || 0) + increment;
+        break;
+      case 'In Progress':
+        analyticsUpdate['analytics.inProgressTasks'] = (analyticsUpdate['analytics.inProgressTasks'] || 0) + increment;
+        break;
+      case 'Done':
+        analyticsUpdate['analytics.doneTasks'] = (analyticsUpdate['analytics.doneTasks'] || 0) + increment;
+        break;
+    }
+  }
+
+  // Update due date-related analytics
+  if (dueDate) {
+    analyticsUpdate['analytics.dueDateTasks'] = (analyticsUpdate['analytics.dueDateTasks'] || 0) + increment;
+  }
 
   await User.findByIdAndUpdate(userId, {
     $inc: analyticsUpdate,
   });
-}
-
-
+};
 
 
 export {
