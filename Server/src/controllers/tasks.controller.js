@@ -271,76 +271,33 @@ await User.findByIdAndUpdate(id, {
  })
 
  const deleteTask = asyncHandler(async (req, res) => {
+  const { taskId } = req.params;
+  const userId = req.user._id;
 
-    const { taskId } = req.params
-    const id = req.user._id
+  const task = await Task.findById(taskId);
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
 
-    const user = await User.findById(id)
-    if(!user){
-        throw new ApiError(404, "User not found")
-    } 
+  if (task.owner.toString() !== userId.toString()) {
+    throw new ApiError(403, "You are not authorized to delete this task");
+  }
 
-    const task = await Task.findById(taskId)
-    if(!task){
-        throw new ApiError(404, "Task not found")
-    }
-
-    let analyticsUpdate = {};
+  const assignedToId = task.asignee?.toString();
 
 
-    switch (task.priority) {
-      case "Low Priority":
-        if (user.analytics.lowPriorityTasks > 0) {
-          analyticsUpdate["analytics.lowPriorityTasks"] = -1;
-        }
-        break;
-      case "Moderate Priority":
-        if (user.analytics.moderatePriorityTasks > 0) {
-          analyticsUpdate["analytics.moderatePriorityTasks"] = -1;
-        }
-        break;
-      case "High Priority":
-        if (user.analytics.highPriorityTasks > 0) {
-          analyticsUpdate["analytics.highPriorityTasks"] = -1;
-        }
-        break;
-    }
-  
-    switch (task.status) {
-      case "Backlog":
-        if (user.analytics.backlogTasks > 0) {
-          analyticsUpdate["analytics.backlogTasks"] = -1;
-        }
-        break;
-      case "Todo":
-        if (user.analytics.todoTasks > 0) {
-          analyticsUpdate["analytics.todoTasks"] = -1;
-        }
-        break;
-      case "In Progress":
-        if (user.analytics.inProgressTasks > 0) {
-          analyticsUpdate["analytics.inProgressTasks"] = -1;
-        }
-        break;
-      case "Done":
-        if (user.analytics.doneTasks > 0) {
-          analyticsUpdate["analytics.doneTasks"] = -1;
-        }
-        break;
-    }
+  await updateUserAnalytics(userId, task, -1);
 
-    await Task.findByIdAndDelete(taskId);
-  
-    await User.findByIdAndUpdate(id, {
-      $inc: analyticsUpdate,
-    });
+  await updateUserAnalytics(assignedToId, task, -1);
 
-    return res
+
+  await Task.findByIdAndDelete(taskId);
+
+  return res
     .status(200)
-    .json(
-        new ApiResponse(200, {}, "Task deleted successfully")
-    )
- })
+    .json(new ApiResponse(200, {}, "Task deleted successfully"));
+});
+
 
  const filterTasks = asyncHandler(async (req, res) => {
     const  {filter = 'This Week'} = req.query;
@@ -439,6 +396,23 @@ await User.findByIdAndUpdate(id, {
     .status(200)
     .json( new ApiResponse(200, task, "Task checklist updated successfully"))
  })
+
+
+ async function updateUserAnalytics(userId, task, increment) {
+  const user = await User.findById(userId);
+  if (!user) {
+    return;
+  }
+
+  const analyticsUpdate = {
+    [`analytics.${task.priority.toLowerCase()}PriorityTasks`]: increment,
+    [`analytics.${task.status.toLowerCase()}Tasks`]: increment,
+  };
+
+  await User.findByIdAndUpdate(userId, {
+    $inc: analyticsUpdate,
+  });
+}
 
 
 
