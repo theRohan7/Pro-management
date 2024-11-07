@@ -86,10 +86,10 @@ const changeTaskStatus = asyncHandler(async (req, res) => {
   task.status = status;
   await task.save({ validateBeforeSave: false });
 
-  await updateUserAnalytics(userId, null, priority, oldStatus, status, null, 1);
+  await updateUserAnalytics(userId, null, null, oldStatus, status, null, 1);
 
   if (task.asignee) {
-    await updateUserAnalytics(task.asignee._id, null, priority, oldStatus, status, null, 1);
+    await updateUserAnalytics(task.asignee._id, null, null, oldStatus, status, null, 1);
   }
 
   return res
