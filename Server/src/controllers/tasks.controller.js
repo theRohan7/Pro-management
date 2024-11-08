@@ -124,6 +124,7 @@ const editTask = asyncHandler(async (req, res) => {
   const oldAsignee = task.asignee;
   const oldPriority = task.priority;
 
+
   task.title = title;
   task.priority = priority;
   task.dueDate = dueDate;
@@ -142,10 +143,10 @@ const editTask = asyncHandler(async (req, res) => {
       { $pull: { tasks: task._id } },
       { new: true, validateBeforeSave: false }
     );
-    await updateUserAnalytics(oldAsignee._id, oldPriority, null, oldStatus, null, task.dueDate, -1);
+    await updateUserAnalytics(oldAsignee._id, oldPriority, null, null, null, task.dueDate, -1);
   }
 
-  await updateUserAnalytics(userId, oldPriority, priority, oldStatus, null, dueDate, 1);
+  await updateUserAnalytics(userId, oldPriority, priority, null, null, dueDate, 1);
   await updateUserAnalytics(newAsignee._id, priority, null, null, null, dueDate, 1)
 
   return res
