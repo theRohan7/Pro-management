@@ -123,6 +123,7 @@ const editTask = asyncHandler(async (req, res) => {
 
   const oldAsignee = task.asignee;
   const oldPriority = task.priority;
+  const oldDueDate = task.dueDate;
 
 
   task.title = title;
@@ -143,11 +144,11 @@ const editTask = asyncHandler(async (req, res) => {
       { $pull: { tasks: task._id } },
       { new: true, validateBeforeSave: false }
     );
-    await updateUserAnalytics(oldAsignee._id, oldPriority, null, null, null, task.dueDate, -1);
+    await updateUserAnalytics(oldAsignee._id, oldPriority, null, null, null, oldDueDate, -1);
   }
 
   await updateUserAnalytics(userId, oldPriority, priority, null, null, dueDate, 1);
-  await updateUserAnalytics(newAsignee._id, priority, null, null, null, dueDate, 1)
+  await updateUserAnalytics(newAsignee._id, null, priority, null, null, dueDate, 1)
 
   return res
     .status(200)
@@ -303,11 +304,11 @@ const editTask = asyncHandler(async (req, res) => {
 
  const updateUserAnalytics = async (
                                   userId, 
-                                  oldPriority, 
-                                  newPriority, 
-                                  oldStatus, 
-                                  newStatus, 
-                                  dueDate, 
+                                  oldPriority = null, 
+                                  newPriority = null,
+                                  oldStatus = null, 
+                                  newStatus = null,
+                                  dueDate = null,
                                   increment = 1
                                   ) => {
   const analyticsUpdate = {};
@@ -373,13 +374,13 @@ const editTask = asyncHandler(async (req, res) => {
   }
 
   // Update due date-related analytics
-  if (dueDate) {
+  if (dueDate && !isNaN(new Date(dueDate).getTime())) {
     analyticsUpdate['analytics.dueDateTasks'] = (analyticsUpdate['analytics.dueDateTasks'] || 0) + increment;
-  }
+}
 
   await User.findByIdAndUpdate(userId, {
     $inc: analyticsUpdate,
-  });
+  },{new: true, validateBeforeSave: false});
 };
 
 
