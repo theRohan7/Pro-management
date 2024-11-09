@@ -191,10 +191,10 @@ const editTask = asyncHandler(async (req, res) => {
     );
   }
 
-  await updateUserAnalytics(userId, task.priority, null, task.dueDate, -1);
+  await updateUserAnalytics(userId,null, task.priority, null,task.status, task.dueDate, -1);
 
   if (asignee) {
-    await updateUserAnalytics(asignee._id, task.priority, null, task.dueDate, -1);
+    await updateUserAnalytics(asignee._id,null, task.priority, null,task.status, task.dueDate, -1);
   }
 
   return res
