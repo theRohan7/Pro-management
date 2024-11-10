@@ -73,9 +73,16 @@ const changeTaskStatus = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  const task = await Task.findById(taskId).populate('asignee');
+  const task = await Task.findById(taskId).populate(['asignee', 'owner']);
   if (!task) {
     throw new ApiError(404, 'Task not found');
+  }
+
+  const isOwner = task.owner._id.toString() === userId.toString();
+  const isAsignee = task.asignee && task.asignee._id.toString() === userId.toString();
+
+  if (!isOwner && !isAsignee) {
+    throw new ApiError(403, "You are not authorized to update this task");
   }
 
   if (!['Backlog', 'Todo', 'In Progress', 'Done'].includes(status)) {
@@ -86,9 +93,11 @@ const changeTaskStatus = asyncHandler(async (req, res) => {
   task.status = status;
   await task.save({ validateBeforeSave: false });
 
-  await updateUserAnalytics(userId, null, null, oldStatus, status, null, 1);
+  if(task.owner) {
+    await updateUserAnalytics(task.owner._id, null, null, oldStatus, status, null, 1);
+  }
 
-  if (task.asignee) {
+  if (task.asignee && task.asignee._id.toString() !== task.owner._id.toString()) {
     await updateUserAnalytics(task.asignee._id, null, null, oldStatus, status, null, 1);
   }
 
